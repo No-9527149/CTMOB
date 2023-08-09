@@ -5,7 +5,7 @@ from threading import Event
 from collections import deque
 
 
-class Combine(object):
+class synchronization(object):
     def __init__(self, src_1, src_2, event):
         self.src_1 = src_1
         self.src_2 = src_2
@@ -72,5 +72,5 @@ class Combine(object):
 if __name__ == '__main__':
     event = Event()
     event.clear()
-    combine = Combine(0, 1, event)
+    combine = synchronization(0, 1, event)
     combine.run()

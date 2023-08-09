@@ -16,7 +16,7 @@ class stereoCameraCalibration(object):
     def stereoCalibration(self, imgL, imgR):
         objPoints = np.zeros((self.width * self.height, 3), np.float32)
         objPoints[:, :2] = np.mgrid[0:self.width, 0:self.height].T.reshape(-1, 2)
-        # objPoints *= self.lattice
+        objPoints *= self.lattice
 
         imgPoints = []
         imgPointsL = []
@@ -25,6 +25,10 @@ class stereoCameraCalibration(object):
         for i in range(len(imgL)):
             chessImgL = cv.imread(imgL[i], 0)
             chessImgR = cv.imread(imgR[i], 0)
+
+            # print("%s" % imgL[i])
+            # print("%s" % imgR[i])
+            # print("\n")
 
             retL, cornerL = cv.findChessboardCorners(chessImgL, (self.width, self.height), cv.CALIB_CB_ADAPTIVE_THRESH | cv.CALIB_CB_FILTER_QUADS)
             retR, cornerR = cv.findChessboardCorners(chessImgR, (self.width, self.height), cv.CALIB_CB_ADAPTIVE_THRESH | cv.CALIB_CB_FILTER_QUADS)
@@ -35,12 +39,12 @@ class stereoCameraCalibration(object):
                 cv.cornerSubPix(chessImgR, cornerR, (11, 11), (-1, -1), self.criteria)
                 imgPointsL.append(cornerL)
                 imgPointsR.append(cornerR)
-                retCornerL = cv.drawChessboardCorners(chessImgL, (self.width, self.height), cornerL, retL)
-                cv.imshow(imgL[i], chessImgL)
-                cv.waitKey(2)
-                retCornerR = cv.drawChessboardCorners(chessImgR, (self.width, self.height), cornerR, retR)
-                cv.imshow(imgR[i], chessImgR)
-                cv.waitKey(2)
+                # retCornerL = cv.drawChessboardCorners(chessImgL, (self.width, self.height), cornerL, retL)
+                # cv.imshow(imgL[i], chessImgL)
+                # cv.waitKey(2)
+                # retCornerR = cv.drawChessboardCorners(chessImgR, (self.width, self.height), cornerR, retR)
+                # cv.imshow(imgR[i], chessImgR)
+                # cv.waitKey(2)
         retL, matInterL, coeDisL, vecRL, vecTL = cv.calibrateCamera(imgPoints, imgPointsL, chessImgL.shape[::-1], None, None)
         retR, matInterR, coeDisR, vecRR, vecTR = cv.calibrateCamera(imgPoints, imgPointsR, chessImgR.shape[::-1], None, None)
 
@@ -91,7 +95,7 @@ def getParser():
     parser = argparse.ArgumentParser(description='Camera Calibration')
     parser.add_argument('--width', type=int, default=11, help = 'CheckBoard Width size')
     parser.add_argument('--height', type=int, default=8, help='CheckBoard Height size')
-    parser.add_argument('--lattice', type=float, default=0.02, help='Lattice Length')
+    parser.add_argument('--lattice', type=float, default=0.22, help='Lattice Length Meter')
     parser.add_argument('--imgDir', type=str, default='./img', help = 'Image Path')
     parser.add_argument('--saveDir', type=str, default='./config', help='Path to Save File')
     parser.add_argument('--fileName', type=str, default='stereoConfig', help='Stereo Config File Name')
@@ -101,7 +105,10 @@ def getFile(path):
     imgPath = []
     for root, dirs, files in  os.walk(path):
         for file in files:
+            if file == '.DS_Store':
+                continue
             imgPath.append(os.path.join(root, file))
+    imgPath.sort()
     return imgPath
 
 if __name__ == '__main__':
@@ -109,8 +116,8 @@ if __name__ == '__main__':
     paramDict = {}
     fileL = getFile(args.imgDir + '/left')
     fileR = getFile(args.imgDir + '/right')
-    imgL = cv.imread(fileL[2])
-    imgR = cv.imread(fileR[2])
+    imgL = cv.imread(fileL[0])
+    imgR = cv.imread(fileR[0])
     height, width = imgL.shape[0:2]
     calibration = stereoCameraCalibration(args.width, args.height, args.lattice)
     matInterL, coeDisL, matInterR, coeDisR, R, T = calibration.stereoCalibration(fileL, fileR)
@@ -121,7 +128,7 @@ if __name__ == '__main__':
     recImgL, recImgR = calibration.getRectifiedImg(imgL, imgR, mapLx, mapLy, mapRx, mapRy)
     imgShow = calibration.drawLine(recImgL, recImgR)
     cv.imshow('output', imgShow)
-    cv.waitKey(1)
+    cv.waitKey(0)
 
 
     # paramDict['size'] = [width, height]
